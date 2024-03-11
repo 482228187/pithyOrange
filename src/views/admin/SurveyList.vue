@@ -3,7 +3,7 @@
     <el-container>
       <el-header>
         <span class="logo-name">简橙</span>
-        <span> ————简洁免费的调查问卷系统</span>
+        <span> ———简洁免费的调查问卷系统</span>
       </el-header>
 
       <el-main>
@@ -77,31 +77,23 @@
                 </el-table-column>
               </el-table>
               <!-- 分页器 -->
-              <el-pagination
-                    style="padding-top: 20px"
-                    small
-                    :style="{'justify-content':'center'}"
-                    :background="true"
-                    :hide-on-single-page="false"
-                    :current-page="queryParams.pageNum"
-                    :page-size="queryParams.pageSize"
-                    :page-sizes="[5, 10, 30, 50]"
-                    :total="total"
-                    layout=" sizes, prev, pager, next"
-                    @current-change="handleCurrentChange"
-                    @size-change="handleSizeChange"
-                />
+              <el-pagination style="padding-top: 20px" small :style="{ 'justify-content': 'center' }" :background="true"
+                :hide-on-single-page="false" :current-page="queryParams.pageNum" :page-size="queryParams.pageSize"
+                :page-sizes="[5, 10, 30, 50]" :total="total" layout=" sizes, prev, pager, next"
+                @current-change="handleCurrentChange" @size-change="handleSizeChange" />
             </el-card>
           </el-col>
           <!-- 标签页 -->
           <el-col :span="15">
-            <el-tabs type="border-card">
-              <el-tab-pane label="题目管理">
-                <QuestionList v-if="openDetails" :surveyId="surveyId"/>
+            <el-tabs v-model="activeName"  type="border-card">
+              <el-tab-pane  name="first" label="题目管理">
+                <QuestionList  v-if="openDetails" :survey-id="surveyId" />
               </el-tab-pane>
-              <el-tab-pane label="问卷分析">问卷分析</el-tab-pane>
-              <el-tab-pane label="问卷设置">
-                <AddSurvey></AddSurvey>
+              <el-tab-pane  name="second"  label="问卷分析">
+                <Analysis  v-if="openDetails" :survey-id="surveyId" ></Analysis>
+              </el-tab-pane>
+              <el-tab-pane  name="third" label="问卷设置">
+                <AddSurvey :is-detail="isDetail" :survey-id="surveyId" ></AddSurvey>
               </el-tab-pane>
             </el-tabs>
           </el-col>
@@ -116,7 +108,7 @@ import { onMounted, reactive, ref, toRefs } from 'vue'
 import { list, add, del, update, get } from "@/api/admin/survey.js";
 import QuestionList from "./QuestionList.vue";
 import Analysis from "@/views/admin/Analysis.vue";
-import AddSurvey from "@/views/admin/AddSurvey.vue" 
+import AddSurvey from "@/views/admin/AddSurvey.vue"
 import {
   Delete,
   Plus,
@@ -131,18 +123,19 @@ import useClipboard from 'vue-clipboard3';
 
 // 已选择的问卷
 const { toClipboard } = useClipboard();
-
+const isDetail = ref('新增')
 const surveyId = ref('')
 const openDetails = ref(false)
+const activeName= ref('third')
 // 存储问卷列表
 const surveyList = ref([])
 // 问卷总数
-const total = ref(0) 
+const total = ref(0)
 // 已选择的问卷
 const selectedRows = ref([])
 
 const data = reactive({
-  form: {
+  formData: {
     options: []
   },
   queryParams: {
@@ -151,7 +144,7 @@ const data = reactive({
     title: '',
   },
 });
-const { queryParams, form } = toRefs(data);
+const { queryParams, formData } = toRefs(data);
 // 初始化获取列表
 onMounted(() => {
   getList()
@@ -183,59 +176,107 @@ function getList() {
 
 // 新建问卷
 function handleAdd() {
-  // TODO
+  reset();
+  activeName.value = 'third'
+  
 }
 
 // 开始收集的函数
 function handleStartCollect() {
-  // TODO
+  selectedRows.value.forEach(row => {
+    row.status = 'collecting'
+    update(row).then(res => {
+      if (res.success) {
+        ElMessage.success(row.title + '发布成功！');
+        getList()
+      } else {
+        ElMessage.error(row.title + '发布失败！');
+      }
+
+    })
+  })
 }
 
 // 停止收集的函数
 function handleStopCollect() {
-  // TODO
+  selectedRows.value.forEach(row => {
+    row.status = 'stop'
+    update(row).then(res => {
+      if (res.success) {
+        ElMessage.success(row.title + '停止成功！');
+        getList()
+      } else {
+        ElMessage.error(row.title + '停止失败！');
+      }
+
+    })
+  })
+
 }
 // 复杂链接的函数
 function copySurveyLink() {
-  // TODO
+  try {
+    //获取url
+    let url = 'http://' + window.location.host + '/survey/' + selectedRows.value[0].id
+    toClipboard(url)
+    ElMessage.success('复制成功！');
+  } catch (e) {
+    ElMessage.error('复制失败！');
+  }
 }
 // 上传问卷成功的回调的函数
-function handleUploadSuccess() {
-  // TODO
+function handleUploadSuccess(response) {
+  if (response.success) {
+    ElMessage.success('上传成功！');
+    getList()
+  } else {
+    ElMessage.error('上传失败！');
+  }
 }
 // 上传问卷成功的回调的函数
 function handleUploadFail() {
-  // TODO
+  ElMessage.error('上传失败！')
 }
-
 // 处理问卷表格点击的操作
 function handleClickRow(row) {
   surveyId.value = row.id
   openDetails.value = true
-// TODO 传值给问卷管理模块
-// title.value = '详 情'
-  // get(row.id).then(res => {
-  //   open.value = true
-  //   form.value = res.data
-  // })
+  // TODO 传值给问卷管理模块
+  isDetail.value = '详 情'
+  console.log('surveyId'+surveyId.value)
+  get(row.id).then(res => {
+    open.value = true
+    formData.value = res.data
+    console.log(surveyId.value)
+  })
 }
 
 // 处理问卷选这改变时候的操作
 function handleSelectionChange(val) {
-  // TODO
+  selectedRows.value = val
 }
 
 // 处理删除问卷操作
 function handleDelete(row) {
-  // TODO
-}
-// 分页器-页面变化
-function handleCurrentChange(row) {
-  // TODO
+  del(row.id).then(res => {
+    if (res.success) {
+      ElMessage.success('删除成功！');
+      getList()
+    } else {
+      ElMessage.error('删除失败！');
+    }
+
+  })
 }
 // 分页器-页面大小变化
-function handleSizeChange(row) {
-  // TODO
+function handleSizeChange(val) {
+  queryParams.value.pageSize = val
+  getList()
+}
+// 分页器-页面变化
+function handleCurrentChange(val) {
+  queryParams.value.pageNum = val
+  getList()
 }
 
 </script>
