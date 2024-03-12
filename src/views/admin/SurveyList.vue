@@ -85,15 +85,15 @@
           </el-col>
           <!-- 标签页 -->
           <el-col :span="15">
-            <el-tabs v-model="activeName"  type="border-card">
-              <el-tab-pane  name="first" label="题目管理">
-                <QuestionList  v-if="openDetails" :survey-id="surveyId" />
+            <el-tabs v-model="activeName" type="border-card">
+              <el-tab-pane name="first" label="题目管理">
+                <QuestionList v-if="openDetails" :surveyId="surveyId" />
               </el-tab-pane>
-              <el-tab-pane  name="second"  label="问卷分析">
-                <Analysis  v-if="openDetails" :survey-id="surveyId" ></Analysis>
+              <el-tab-pane name="second" label="问卷分析">
+                <Analysis v-if="openDetails" :surveyId="surveyId"></Analysis>
               </el-tab-pane>
-              <el-tab-pane  name="third" label="问卷设置">
-                <AddSurvey :is-detail="isDetail" :survey-id="surveyId" ></AddSurvey>
+              <el-tab-pane name="third" label="问卷设置">
+                <AddSurvey v-if="openDetails" :isDetail="isDetail" :form="form"></AddSurvey>
               </el-tab-pane>
             </el-tabs>
           </el-col>
@@ -104,7 +104,7 @@
 
 </template>
 <script setup>
-import { onMounted, reactive, ref, toRefs } from 'vue'
+import { nextTick, onMounted, reactive, ref, toRefs } from 'vue'
 import { list, add, del, update, get } from "@/api/admin/survey.js";
 import QuestionList from "./QuestionList.vue";
 import Analysis from "@/views/admin/Analysis.vue";
@@ -126,7 +126,7 @@ const { toClipboard } = useClipboard();
 const isDetail = ref('新增')
 const surveyId = ref('')
 const openDetails = ref(false)
-const activeName= ref('third')
+const activeName = ref('third')
 // 存储问卷列表
 const surveyList = ref([])
 // 问卷总数
@@ -178,7 +178,7 @@ function getList() {
 function handleAdd() {
   reset();
   activeName.value = 'third'
-  
+
 }
 
 // 开始收集的函数
@@ -239,16 +239,20 @@ function handleUploadFail() {
 }
 // 处理问卷表格点击的操作
 function handleClickRow(row) {
-  surveyId.value = row.id
-  openDetails.value = true
-  // TODO 传值给问卷管理模块
+
+  console.log(row.id)
   isDetail.value = '详 情'
-  console.log('surveyId'+surveyId.value)
-  get(row.id).then(res => {
-    open.value = true
-    formData.value = res.data
-    console.log(surveyId.value)
+  openDetails.value = true
+  nextTick(() => {
+    surveyId.value = row.id
   })
+
+  // TODO 传值给问卷管理模块
+  // get(row.id).then(res => {
+  //   open.value = true
+  //   formData.value = res.data
+  //   console.log(surveyId.value, res.data)
+  // })
 }
 
 // 处理问卷选这改变时候的操作

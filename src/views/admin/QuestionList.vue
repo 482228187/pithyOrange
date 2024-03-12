@@ -40,78 +40,74 @@
     :hide-on-single-page="false" :current-page="queryParams.pageNum" :page-size="queryParams.pageSize"
     :page-sizes="[5, 10, 30, 50]" :total="total" layout=" sizes, prev, pager, next"
     @current-change="handleCurrentChange" @size-change="handleSizeChange" />
-    <!--新增题目的对话框 -->
-    <el-dialog :title="title" v-model="open" :width="dialogWidth" append-to-body>
-      <el-form ref="questionRef" :model="form" :rules="rules" label-width="20%">
-        <el-row :gutter="10">
-          <el-col :span="24">
-            <el-form-item label="问卷ID" prop="surveyId">
-              <el-input disabled v-model="form.survey_id" placeholder="请输入标题"></el-input>
-            </el-form-item>
-          </el-col>
-          <el-col :span="24">
-            <el-form-item label="题目内容" prop="text">
-              <el-input type="textarea" :autosize="{ minRows: 2, maxRows: 5 }" v-model="form.text"
-                        placeholder="请输入题目内容"></el-input>
-            </el-form-item>
-          </el-col>
-          <el-col :span="24">
-            <el-form-item label="题目类型" prop="type">
-              <el-select v-model="form.type" placeholder="请选择题目类型">
-                <el-option label="单选" value="radio"></el-option>
-                <el-option label="多选" value="checkbox"></el-option>
-                <el-option label="简答" value="text"></el-option>
-              </el-select>
-              <el-divider v-if="form.type !== 'text'" direction="vertical"/>
-              <el-button v-if="form.type !== 'text'" type="success" @click="addOption">新增选项</el-button>
-            </el-form-item>
-          </el-col>
-          <!-- 不是简答题则添加选项 -->
-          <el-col :span="24">
-            <el-form-item v-if="form.type !== 'text'"
-                          v-for="(option, index) in form.options"
-                          :label="'选项 ' + String.fromCharCode(65 + index)"
-                          :key="option.key"
-                          :prop="'options.' + index + '.value'">
-              <!-- 让元素的子元素直接显示在文档树中，替代了该元素自身的布局。将元素的内容垂直居中对齐。 -->
-              <div style="display: contents;vertical-align: middle;">
-                <div style="padding: 3px;width: 60%">
-                  <el-input type="textarea" :autosize="{ minRows: 1, maxRows: 5 }"
-                            v-model="form.options[index].value"></el-input>
-                </div>
-                <div style="padding: 3px">
-                  <el-checkbox  v-model="form.options[index].has_ext_msg" true-label="yes" false-label="no"
-                               label="填写备注"/>
-                </div>
-                <div style="padding: 3px">
-                  <el-button type="danger" @click.prevent="removeOption(option)">删除</el-button>
-                </div>
+  <!--新增题目的对话框 -->
+  <el-dialog :title="title" v-model="open" :width="dialogWidth" append-to-body>
+    <el-form ref="questionRef" :model="form" :rules="rules" label-width="20%">
+      <el-row :gutter="10">
+        <el-col :span="24">
+          <el-form-item label="问卷ID" prop="surveyId">
+            <el-input disabled v-model="form.survey_id" placeholder="请输入标题"></el-input>
+          </el-form-item>
+        </el-col>
+        <el-col :span="24">
+          <el-form-item label="题目内容" prop="text">
+            <el-input type="textarea" :autosize="{ minRows: 2, maxRows: 5 }" v-model="form.text"
+              placeholder="请输入题目内容"></el-input>
+          </el-form-item>
+        </el-col>
+        <el-col :span="24">
+          <el-form-item label="题目类型" prop="type">
+            <el-select v-model="form.type" placeholder="请选择题目类型">
+              <el-option label="单选" value="radio"></el-option>
+              <el-option label="多选" value="checkbox"></el-option>
+              <el-option label="简答" value="text"></el-option>
+            </el-select>
+            <el-divider v-if="form.type !== 'text'" direction="vertical" />
+            <el-button v-if="form.type !== 'text'" type="success" @click="addOption">新增选项</el-button>
+          </el-form-item>
+        </el-col>
+        <!-- 不是简答题则添加选项 -->
+        <el-col :span="24">
+          <el-form-item v-if="form.type !== 'text'" v-for="(option, index) in form.options"
+            :label="'选项 ' + String.fromCharCode(65 + index)" :key="option.key" :prop="'options.' + index + '.value'">
+            <!-- 让元素的子元素直接显示在文档树中，替代了该元素自身的布局。将元素的内容垂直居中对齐。 -->
+            <div style="display: contents;vertical-align: middle;">
+              <div style="padding: 3px;width: 60%">
+                <el-input type="textarea" :autosize="{ minRows: 1, maxRows: 5 }"
+                  v-model="form.options[index].value"></el-input>
               </div>
-            </el-form-item>
-          </el-col>
-          <!-- 排序 -->
-          <el-col :span="24">
-            <el-form-item label="排序" prop="order">
-              <el-input-number v-model="form.order" placeholder="请输入排序"></el-input-number>
-            </el-form-item>
-          </el-col>
-        </el-row>
+              <div style="padding: 3px">
+                <el-checkbox v-model="form.options[index].has_ext_msg" true-label="yes" false-label="no" label="填写备注" />
+              </div>
+              <div style="padding: 3px">
+                <el-button type="danger" @click.prevent="removeOption(option)">删除</el-button>
+              </div>
+            </div>
+          </el-form-item>
+        </el-col>
+        <!-- 排序 -->
+        <el-col :span="24">
+          <el-form-item label="排序" prop="order">
+            <el-input-number v-model="form.order" placeholder="请输入排序"></el-input-number>
+          </el-form-item>
+        </el-col>
+      </el-row>
 
 
-      </el-form>
-      <template #footer>
-        <div class="dialog-footer">
-          <el-button type="primary" @click="submitForm(questionRef)">确 定</el-button>
-          <el-button @click="open = false">取 消</el-button>
-        </div>
-      </template>
-    </el-dialog>
+    </el-form>
+    <template #footer>
+      <div class="dialog-footer">
+        <el-button type="primary" @click="submitForm(questionRef)">确 定</el-button>
+        <el-button @click="open = false">取 消</el-button>
+      </div>
+    </template>
+  </el-dialog>
 
 </template>
 <script setup>
-import {computed, onMounted, reactive, ref, toRefs, watch} from 'vue'
-import {list, add, del, update, get} from "@/api/admin/question.js";
-import {Delete, Edit, Plus} from "@element-plus/icons";
+import { computed, nextTick, onMounted, reactive, ref, toRefs, watch } from 'vue'
+import { list, add, del, update, get } from "@/api/admin/question.js";
+import { Delete, Edit, Plus } from "@element-plus/icons";
 const props = defineProps({
   surveyId: String,
 })
@@ -137,23 +133,23 @@ const data = reactive({
     survey_id: props.surveyId
   },
 });
-const {queryParams, form} = toRefs(data);
+const { queryParams, form } = toRefs(data);
 // 对话框的表单校验规则
 const rules = ({
-  text: [{required: true, message: '请输入题目内容', trigger: 'blur'}],
-  type: [{required: true, message: '请选择题目类型', trigger: 'change'}],
-  order: [{required: true, message: '请输入排序', trigger: 'blur'}],
+  text: [{ required: true, message: '请输入题目内容', trigger: 'blur' }],
+  type: [{ required: true, message: '请选择题目类型', trigger: 'change' }],
+  order: [{ required: true, message: '请输入排序', trigger: 'blur' }],
 })
-watch(() => props.surveyId, (oldValue,newValue) => {
-  queryParams.value.survey_id= newValue
-  
-  console.log("变化的新ID+"+newValue)
-  getList()
+watch(() => props.surveyId, (newValue, oldValue) => {
+  if (newValue) {
+    queryParams.value.survey_id = newValue
+    getList()
+  }
 });
 
-onMounted(() => {
-  getList()
-});
+// onMounted(() => {
+//   getList()
+// });
 
 function getList() {
   list(queryParams.value).then(res => {
@@ -187,7 +183,7 @@ function handleEdit(row) {
     title.value = '修改'
     //添加校验项
     for (let i = 0; i < form.value.options.length; i++) {
-      rules['options.' + i + '.value'] = [{required: true, message: '不能为空', trigger: 'blur'}]
+      rules['options.' + i + '.value'] = [{ required: true, message: '不能为空', trigger: 'blur' }]
     }
   })
 }
@@ -215,14 +211,14 @@ function handleSizeChange(val) {
 // 新增选项
 function addOption() {
   form.value.options.push({
-        label: String.fromCharCode(65 + form.value.options.length), // A B C D
-        value: '', // 选项的值
-        key: Date.now() // 选项的唯一标识
-      }
+    label: String.fromCharCode(65 + form.value.options.length), // A B C D
+    value: '', // 选项的值
+    key: Date.now() // 选项的唯一标识
+  }
   )
   //添加校验项
   const index = form.value.options.length - 1
-  rules['options.' + index + '.value'] = [{required: true, message: '不能为空', trigger: 'blur'}]
+  rules['options.' + index + '.value'] = [{ required: true, message: '不能为空', trigger: 'blur' }]
 }
 // 删除选项
 function removeOption(op) {
@@ -241,7 +237,7 @@ function submitForm(elForm) {
   elForm.validate((valid, fields) => {
     if (valid) {
       // 如果不是简答题则需要添加选项
-      if(form.value.type!=='text' && form.value.options.length===0){
+      if (form.value.type !== 'text' && form.value.options.length === 0) {
         ElMessage.error('请添加选项')
         return
       }
@@ -269,7 +265,7 @@ function submitForm(elForm) {
         })
       }
     } else {
-      console.log('没有通过校验:', fields)
+      // console.log('没有通过校验:', fields)
     }
   })
 
