@@ -5,7 +5,8 @@
     <el-col :span="8" :xs="48">
       <div class="login-container">
         <h2 class="login-title">欢迎登录</h2>
-        <el-input v-model="key" placeholder="请输入您的密钥" class="login-input" show-password></el-input>
+        <el-input :autofocus="true" v-model="username" placeholder="请输入您的用户名" class="login-input" @keyup.enter="Login"></el-input>
+        <el-input v-model="password" placeholder="请输入您的密码" class="login-input" show-password></el-input>
         <el-button type="primary" @click="Login" class="login-button">登录</el-button>
       </div>
     </el-col>
@@ -23,10 +24,11 @@ import {useRouter} from "vue-router";
 
 
 const router = useRouter()
-const key = ref('')
+const username = ref('')
+const password = ref('')
 
 function Login() {
-  login({key: key.value}).then(res => {
+  login({username: username.value,password: password.value}).then(res => {
     if (res.success) {
       ElMessage.success(res.message)
       router.push({path: '/admin'})

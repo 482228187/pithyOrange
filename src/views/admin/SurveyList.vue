@@ -50,7 +50,7 @@
                 </el-col>
               </el-row>
               <!-- 问卷列表 -->
-              <el-table border fit :highlight-current-row="true" :data="surveyList" @row-click="handleClickRow"
+              <el-table v-loading="loading"  border fit :highlight-current-row="true" :data="surveyList" @row-click="handleClickRow"
                 @selection-change="handleSelectionChange">
                 <el-table-column type="selection" align="center">
                 </el-table-column>
@@ -85,15 +85,15 @@
           </el-col>
           <!-- 标签页 -->
           <el-col :span="15">
-            <el-tabs v-model="activeName" type="border-card">
+            <el-tabs v-model="activeName" type="border-card" @tab-click="handleTabClick">
               <el-tab-pane name="first" label="题目管理">
-                <QuestionList v-if="openDetails" :surveyId="surveyId" />
+                <QuestionList v-if="openDetails[0]" :surveyId="surveyId" />
               </el-tab-pane>
               <el-tab-pane name="second" label="问卷分析">
-                <Analysis v-if="openDetails" :surveyId="surveyId"></Analysis>
+                <Analysis v-if="openDetails[1]" :surveyId="surveyId"></Analysis>
               </el-tab-pane>
               <el-tab-pane name="third" label="问卷设置">
-                <AddSurvey v-if="openDetails" :isDetail="isDetail" :form="form"></AddSurvey>
+                <AddSurvey v-model:needRefresh="needRefresh"  v-if="openDetails[2]" :isDetail="isDetail" :form="form"></AddSurvey>
               </el-tab-pane>
             </el-tabs>
           </el-col>
@@ -104,7 +104,7 @@
 
 </template>
 <script setup>
-import { nextTick, onMounted, reactive, ref, toRefs } from 'vue'
+import { watch, nextTick, onMounted, reactive, ref, toRefs } from 'vue'
 import { list, add, del, update, get } from "@/api/admin/survey.js";
 import QuestionList from "./QuestionList.vue";
 import Analysis from "@/views/admin/Analysis.vue";
@@ -120,12 +120,14 @@ import {
   VideoPause
 } from "@element-plus/icons";
 import useClipboard from 'vue-clipboard3';
+import { tabBarProps } from 'element-plus';
 
+const loading = ref(true)
 // 已选择的问卷
 const { toClipboard } = useClipboard();
-const isDetail = ref('新增')
+const isDetail = ref('新 增')
 const surveyId = ref('')
-const openDetails = ref(false)
+const openDetails = ref([false,false,false])
 const activeName = ref('third')
 // 存储问卷列表
 const surveyList = ref([])
@@ -134,8 +136,10 @@ const total = ref(0)
 // 已选择的问卷
 const selectedRows = ref([])
 
+// 新增问卷之后需要刷新
+const needRefresh = ref(false)
 const data = reactive({
-  formData: {
+  form: {
     options: []
   },
   queryParams: {
@@ -144,7 +148,15 @@ const data = reactive({
     title: '',
   },
 });
-const { queryParams, formData } = toRefs(data);
+const { queryParams, form } = toRefs(data);
+
+watch(needRefresh, (newValue, oldValue) => {
+// 需要刷新
+  if (newValue) {
+    getList()
+  }
+
+});
 // 初始化获取列表
 onMounted(() => {
   getList()
@@ -172,12 +184,15 @@ function getList() {
       ElMessage.error(res.message)
     }
   })
+  loading.value = false
 }
 
 // 新建问卷
 function handleAdd() {
-  reset();
+  openDetails.value[2] = true
   activeName.value = 'third'
+  isDetail.value = "新 增"
+
 
 }
 
@@ -240,19 +255,20 @@ function handleUploadFail() {
 // 处理问卷表格点击的操作
 function handleClickRow(row) {
 
-  console.log(row.id)
+ 
   isDetail.value = '详 情'
-  openDetails.value = true
+  // 第三个可见
+  if(activeName.value === "first"){
+    openDetails.value[0] = true
+  }else if(activeName.value === "second"){
+    openDetails.value[1] = true
+  }
+  openDetails.value[2] = true
+  surveyId.value = row.id
   nextTick(() => {
-    surveyId.value = row.id
+    
+    form.value = row
   })
-
-  // TODO 传值给问卷管理模块
-  // get(row.id).then(res => {
-  //   open.value = true
-  //   formData.value = res.data
-  //   console.log(surveyId.value, res.data)
-  // })
 }
 
 // 处理问卷选这改变时候的操作
@@ -281,6 +297,17 @@ function handleSizeChange(val) {
 function handleCurrentChange(val) {
   queryParams.value.pageNum = val
   getList()
+}
+// 处理标签页点击的函数
+function handleTabClick(TabsPaneContext,event){
+  if(TabsPaneContext.props.name === "first" && surveyId.value){
+    openDetails.value[0] = true
+  }else if(TabsPaneContext.props.name === "second" && surveyId.value){
+    openDetails.value[1] = true
+  }else if(surveyId.value){
+    openDetails.value[2] = true
+  }
+
 }
 
 </script>

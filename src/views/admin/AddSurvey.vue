@@ -3,7 +3,7 @@
     <template #header>
       <span>{{ title }}</span>
     </template>
-    <el-form :disabled="title === '详 情'" @click="title = '修 改'" ref="surveyRef" :model="formdata" :inline="true"
+    <el-form :disabled="title === '详 情'" @click="handleClick" ref="surveyRef" :model="formdata" :inline="true"
       size="small" :rules="rules">
       <el-form-item label="标题" prop="title">
         <el-input type="textarea" :autosize="{ minRows: 1, maxRows: 3 }" v-model="formdata.title"
@@ -58,10 +58,11 @@
 </template>
 <script setup>
 import { list, add, del, update, get } from "@/api/admin/survey.js";
-import { ref, onMounted, watch} from 'vue'
+import { ref, onMounted, watch } from 'vue'
 const props = defineProps({
   form: Object,
-  isDetail: String
+  isDetail: String,
+  needRefresh: String
 })
 
 const surveyRef = ref()
@@ -69,7 +70,10 @@ const title = ref('新 增')
 const formdata = ref({
   option: []
 })
-searchId.value = props.surveyId
+
+
+const emits = defineEmits(['update:needRefresh'])
+
 // 校验规则
 const rules = ({
   title: [{ required: true, message: '请填写', trigger: 'blur' }],
@@ -82,13 +86,16 @@ const rules = ({
   end_time: [{ required: true, message: '请填写', trigger: 'blur' }],
 })
 // 监听选择的变化
-watch(() => props.form, (newValue, oldValue) => {
-  if (newValue) {
- 
-    formdata.value = newValue
-    console.log(props.isDetail)
-    title.value = props.isDetail
-     
+watch(() => [props.form, props.isDetail], (newValue, oldValue) => {
+  if (newValue[0] && newValue[1] === "详 情") {
+    formdata.value = newValue[0]
+    title.value = newValue[1]
+  }
+  else if (newValue[1] === "新 增") {
+    // 重置
+    reset()
+    title.value = newValue[1]
+
   }
 });
 
@@ -103,7 +110,8 @@ function submitForm(elForm) {
         update(formdata.value).then(res => {
           if (res.success) {
             ElMessage.success('修改成功！');
-            getList()
+            // 刷新
+            emits('update:needRefresh', true)
           } else {
             ElMessage.error('修改失败！');
           }
@@ -114,7 +122,7 @@ function submitForm(elForm) {
           if (res.success) {
             ElMessage.success('新增成功！');
             reset()
-            getList()
+            emits('update:needRefresh', true)
           } else {
             ElMessage.error('新增失败！');
           }
@@ -123,6 +131,13 @@ function submitForm(elForm) {
     }
   })
 }
-
+function reset() {
+  formdata.value = { options: [] };
+}
+function handleClick() {
+  if (title.value === "详 情") {
+    title.value = '修 改'
+  }
+}
 </script>
 <style scoped></style>

@@ -1,6 +1,6 @@
 <template>
   <el-button type="primary" :icon="Plus" @click="handleAdd" style="margin-bottom: 10px;">新增题目</el-button>
-  <el-table border fit :highlight-current-row="true" :data="questionList">
+  <el-table v-loading="loading" border fit :highlight-current-row="true" :data="questionList">
     <el-table-column width="70" label="序号" type="index" align="center">
     </el-table-column>
     <el-table-column prop="text" align="left" key="text" label="题目" :show-overflow-tooltip="true">
@@ -105,12 +105,15 @@
 
 </template>
 <script setup>
-import { computed, nextTick, onMounted, reactive, ref, toRefs, watch } from 'vue'
+import {onMounted, computed, reactive, ref, toRefs, watch } from 'vue'
 import { list, add, del, update, get } from "@/api/admin/question.js";
 import { Delete, Edit, Plus } from "@element-plus/icons";
 const props = defineProps({
   surveyId: String,
 })
+// 加载进度条
+const loading = ref(true)
+
 const open = ref(false)
 const title = ref('')
 // 对话框表单对象
@@ -147,15 +150,20 @@ watch(() => props.surveyId, (newValue, oldValue) => {
   }
 });
 
-// onMounted(() => {
-//   getList()
-// });
+onMounted(() => {
+  getList()
+});
 
 function getList() {
   list(queryParams.value).then(res => {
-    questionList.value = res.data.list
-    total.value = res.data.total
+    if (res.success) {
+      questionList.value = res.data.list
+      total.value = res.data.total
+    } else {
+      ElMessage.error(res.message)
+    }
   })
+  loading.value = false
 }
 // 新增题目
 function handleAdd() {
@@ -265,6 +273,7 @@ function submitForm(elForm) {
         })
       }
     } else {
+      ElMessage.success("没有通过校验")
       // console.log('没有通过校验:', fields)
     }
   })

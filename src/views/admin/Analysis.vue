@@ -8,7 +8,7 @@
     <el-tag>最后一次答题时间 : {{ analysisSurveyData.MaxCreateAt }}</el-tag>
   </div>
   <!--题目答案详情 -->
-  <el-table border :data="questionList" @expand-change="ExpandChange">
+  <el-table v-loading="loading" border :data="questionList" @expand-change="ExpandChange">
     <el-table-column type="expand">
       <template #default="{ row }">
         <div style="padding-left: 10px">
@@ -61,6 +61,7 @@ import { nextTick, onMounted, reactive, ref, watch } from "vue";
 const props = defineProps({
   surveyId: String,
 })
+const loading =ref(true)
 // 题目总数
 const total = ref(0)
 // 问题列表
@@ -89,20 +90,20 @@ const queryParams = reactive({
 });
 
 // 监听选择问卷的ID变化
-watch(() => props.surveyId, (newValue,oldValue) => {
-  console.log(newValue, 5555)
+watch(() => props.surveyId, (newValue,oldValue) => { 
   if (newValue) {
     queryParams.survey_id = newValue
     nextTick(() => {
       getSurveyAnalysis()
 
     })
+    
   }
 });
 
-// onMounted(() => {
-//   getSurveyAnalysis()
-// })
+onMounted(() => {
+  getSurveyAnalysis()
+})
 //  获取问卷答题详情
 function getSurveyAnalysis() {
   SurveyAnalysis(props.surveyId).then(res => {
@@ -113,6 +114,7 @@ function getSurveyAnalysis() {
     }
   })
   ListQuestion()
+  loading.value = false
 }
 
 // 表格展开的时候处理
